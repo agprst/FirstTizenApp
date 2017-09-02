@@ -1,3 +1,16 @@
+window.onload = function() {
+    // TODO:: Do your initialization job
+
+    // add eventListener for tizenhwkey
+    document.addEventListener('tizenhwkey', function(e) {
+        if (e.keyName === "back") {
+            try {
+                tizen.application.getCurrentApplication().exit();
+            } catch (ignore) {}
+        }
+    });
+};
+
 // Initialize your app
 var myApp = new Framework7();
 
@@ -18,51 +31,11 @@ myApp.onPageInit('about', function (page) {
     });
 });
 
-// Generate dynamic page
-var dynamicPageIndex = 0;
-function createContentPage() {
-	mainView.router.loadContent(
-        '<!-- Top Navbar-->' +
-        '<div class="navbar">' +
-        '  <div class="navbar-inner">' +
-        '    <div class="left"><a href="#" class="back link"><i class="icon icon-back"></i><span>Back</span></a></div>' +
-        '    <div class="center sliding">Dynamic Page ' + (++dynamicPageIndex) + '</div>' +
-        '  </div>' +
-        '</div>' +
-        '<div class="pages">' +
-        '  <!-- Page, data-page contains page name-->' +
-        '  <div data-page="dynamic-pages" class="page">' +
-        '    <!-- Scrollable page content-->' +
-        '    <div class="page-content">' +
-        '      <div class="content-block">' +
-        '        <div class="content-block-inner">' +
-        '          <p>Here is a dynamic page created on ' + new Date() + ' !</p>' +
-        '          <p>Go <a href="#" class="back">back</a> or go to <a href="services.html">Services</a>.</p>' +
-        '        </div>' +
-        '      </div>' +
-        '    </div>' +
-        '  </div>' +
-        '</div>'
-    );
-	return;
-}
-function findSuccess(items)
-{
-console.log("Found " + items.length + " audio tracks:");
-for(var i=0; i<items.length; i++)
-{
- console.log(i.toFixed() + ". " + items[i].title + " (" +
- items[i].name + ")");
- }
-}
 
-function findError(err)
-{
- console.log("Error: " + err.message);
-}
+//error handler
 function successCb()
 {
-	console.log("Camera application launched successfully");
+	console.log("application launched successfully");
 }
 function errCb(err)
 {
@@ -70,23 +43,24 @@ function errCb(err)
 }
 var replyCB =
 {
- onsuccess: function(pairs)
- 	{
-	 for(var i=0; i<pairs.length; i++)
-	 {
-		 if(pairs[i].key ===
-		 "http://tizen.org/appcontrol/data/selected");
-		 {
-			 console.log("picture taken: " + pairs[i].value[0]);
-		 }
-	 }
- 	},
-	onfailure: function()
-	{
-		console.log("FAILED");
-	}
+		onsuccess: function(pairs)
+		{
+			for(var i=0; i<pairs.length; i++)
+			{
+				if(pairs[i].key ===
+				"http://tizen.org/appcontrol/data/selected");
+				{
+					 console.log("picture taken: " + pairs[i].value[0]);
+				}
+			}
+		},
+		onfailure: function()
+		{
+			console.log("FAILED");
+		}
 };
-			 
+
+//end error handler
 
 $$('.ac-5').on('click', function () {
     var buttons = [
@@ -97,16 +71,32 @@ $$('.ac-5').on('click', function () {
             			 "http://tizen.org/appcontrol/operation/create_content",
             			 null,
             			 "image/jpg");
-            	tizen.application.launchAppControl(appControl, null, successCb, errCb,
-            			replyCB);
-
+            	tizen.application.launchAppControl(appControl, null, successCb, errCb, replyCB);
             }
         },
         {
             text: 'Galery',
             onClick: function () {
-            	var imagesOnly = new tizen.AttributeFilter("type", "EXACTLY", "IMAGE");
-            	tizen.content.find(findSuccess, findError, null, imagesOnly);
+            	
+            	var appControl = new tizen.ApplicationControl(
+            			"http://tizen.org/appcontrol/operation/pick",
+            			null,
+            	"IMAGE");
+            	var appControlReplyCallback = {
+            			onsuccess: function(data) {
+            				for(var i=0; i < data.length; i++) {
+            					console.log("#"+i+" key:"+data[i].key);
+            					for(var j=0; j < data[i].value.length; j++) {
+            						console.log("   value#"+j+":"+data[i].value[j]);
+            					}
+            				}
+            			},
+            			onfailure: function() {
+            				console.log('The launch application control failed');
+            			}
+            	}
+
+            	tizen.application.launchAppControl(appControl, null, successCb, errCb, appControlReplyCallback );
             }
         },
         {
@@ -119,6 +109,5 @@ $$('.ac-5').on('click', function () {
     ];
     myApp.actions(buttons);
 });   
-
 
 
